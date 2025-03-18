@@ -8,11 +8,11 @@ public enum ColorTheme {
     public static String getCssPath(ColorTheme colorTheme){
         switch(colorTheme){
             case LIGHT:
-                return "/css/themeLight.css";
+                return "/view/css/themeLight.css";
             case DEFAULT:
-                return "/css/themeDefault.css";
+                return "/view/css/themeDefault.css";
             case DARK:
-                return "/css/themeDark.css";
+                return "/view/css/themeDark.css";
             default:
                 return null;
         }

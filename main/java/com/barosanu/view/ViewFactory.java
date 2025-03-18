@@ -12,7 +12,6 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class ViewFactory {
 
@@ -47,7 +46,7 @@ public class ViewFactory {
     public void showLoginWindow(){
         System.out.println("showLoginWindow function from ViewFactory called");
 
-        BaseController controller = new LoginWindowController(emailManager, this, "/LoginWindow.fxml");
+        BaseController controller = new LoginWindowController(emailManager, this, "/view/css/LoginWindow.fxml");
         initializeStage(controller);
     }
 
@@ -55,7 +54,7 @@ public class ViewFactory {
 
         System.out.println("showMainWindow function from ViewFactory called");
 
-        BaseController controller = new MainWindowController(emailManager, this, "/MainWindow.fxml");
+        BaseController controller = new MainWindowController(emailManager, this, "/view/css/MainWindow.fxml");
         initializeStage(controller);
     }
 
@@ -63,7 +62,7 @@ public class ViewFactory {
 
         System.out.println("showOptionsWindow function from OptionsWindowController called");
 
-        BaseController controller = new OptionsWindowController(emailManager, this, "/OptionsWindow.fxml");
+        BaseController controller = new OptionsWindowController(emailManager, this, "/view/css/OptionsWindow.fxml");
         initializeStage(controller);
     }
 
