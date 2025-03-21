@@ -3,10 +3,12 @@ package com.barosanu.controller.services;
 import com.barosanu.EmailManager;
 import com.barosanu.controller.EmailLoginResult;
 import com.barosanu.model.EmailAccount;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
 
 import javax.mail.*;
 
-public class LoginService {
+public class LoginService extends Service<EmailLoginResult> {
 
     private final EmailAccount emailAccount;
     private final EmailManager emailManager;
@@ -16,7 +18,7 @@ public class LoginService {
         this.emailManager = emailManager;
     }
 
-    public EmailLoginResult login() {
+    private EmailLoginResult login() {
         // Using javax.mail.Authenticator to handle authentication
         Authenticator authenticator = new Authenticator() {
             @Override
@@ -27,6 +29,7 @@ public class LoginService {
         };
 
         try {
+            Thread.sleep(100);
             // Create a mail session with the provided authenticator
             Session session = Session.getInstance(emailAccount.getProperties(), authenticator);
             Store store = session.getStore("imaps");
@@ -41,6 +44,8 @@ public class LoginService {
 
             // Store the connection for further use
             emailAccount.setStore(store);
+            emailManager.addEmialAccount(emailAccount);
+
 
             System.out.println("Login successful!");
             return EmailLoginResult.SUCCESS;
@@ -56,6 +61,18 @@ public class LoginService {
             System.err.println("Unexpected mail error: " + e.getMessage());
             e.printStackTrace();
             return EmailLoginResult.FAILED_BY_UNEXPECTED_ERROR;
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    protected Task<EmailLoginResult> createTask() {
+        return new Task<EmailLoginResult>() {
+            @Override
+            protected EmailLoginResult call() throws Exception {
+                return login();
+            }
+        };
     }
 }
