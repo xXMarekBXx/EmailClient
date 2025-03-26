@@ -5,17 +5,23 @@ import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
 import javax.mail.Folder;
+import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Store;
+import javax.mail.event.MessageCountEvent;
+import javax.mail.event.MessageCountListener;
+import java.util.List;
 
 public class FetchFolderService extends Service<Void> {
 
     private Store store;
     private EmailTreeItem<String> foldersRoot;
+    private List<Folder> folderList;
 
-    public FetchFolderService(Store store, EmailTreeItem<String> foldersRoot) {
+    public FetchFolderService(Store store, EmailTreeItem<String> foldersRoot, List<Folder> folderList) {
         this.store = store;
         this.foldersRoot = foldersRoot;
+        this.folderList = folderList;
     }
 
     @Override
@@ -36,15 +42,38 @@ public class FetchFolderService extends Service<Void> {
 
     private void handleFolders(Folder[] folders, EmailTreeItem<String> foldersRoot) throws MessagingException {
         for(Folder folder: folders){
+            folderList.add(folder);
             EmailTreeItem<String> emailTreeItem = new EmailTreeItem<String>(folder.getName());
             foldersRoot.getChildren().add(emailTreeItem);
             foldersRoot.setExpanded(true);
             fetchMessagesOnFolder(folder, emailTreeItem);
+            addMessageListenerToFolder(folder, emailTreeItem);
             if(folder.getType() == Folder.HOLDS_FOLDERS){
                 Folder[] subFolders = folder.list();
                 handleFolders(subFolders, emailTreeItem);
             }
         }
+    }
+
+    private void addMessageListenerToFolder(Folder folder, EmailTreeItem<String> emailTreeItem) {
+        folder.addMessageCountListener(new MessageCountListener() {
+            @Override
+            public void messagesAdded(MessageCountEvent e) {
+                for(int i =0; i < e.getMessages().length; i++){
+                    try {
+                        Message message = folder.getMessage(folder.getMessageCount() - 1);
+                        emailTreeItem.addEmailToTop(message);
+                    } catch (MessagingException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void messagesRemoved(MessageCountEvent e) {
+
+            }
+        });
     }
 
     private void fetchMessagesOnFolder(Folder folder, EmailTreeItem<String> emailTreeItem) {

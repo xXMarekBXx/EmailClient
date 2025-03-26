@@ -44,7 +44,7 @@ public class LoginService extends Service<EmailLoginResult> {
 
             // Store the connection for further use
             emailAccount.setStore(store);
-            emailManager.addEmialAccount(emailAccount);
+            emailManager.addEmailAccount(emailAccount);
 
 
             System.out.println("Login successful!");
