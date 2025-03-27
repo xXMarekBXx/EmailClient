@@ -1,5 +1,6 @@
 package com.barosanu.model;
 
+import javax.mail.Session;
 import javax.mail.Store;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
@@ -14,6 +15,15 @@ public class EmailAccount {
     private String password;
     private Properties properties;
     private Store store;
+    private Session session;
+
+    public Session getSession() {
+        return session;
+    }
+
+    public void setSession(Session session) {
+        this.session = session;
+    }
 
     public EmailAccount(String address, String password) {
         this.address = address;
@@ -77,6 +87,11 @@ public class EmailAccount {
 
     public void setProperties(Properties properties) {
         this.properties = properties;
+    }
+
+    @Override
+    public String toString() {
+        return address;
     }
 
     public Store getStore() {

@@ -32,6 +32,7 @@ public class LoginService extends Service<EmailLoginResult> {
             Thread.sleep(100);
             // Create a mail session with the provided authenticator
             Session session = Session.getInstance(emailAccount.getProperties(), authenticator);
+            emailAccount.setSession(session);
             Store store = session.getStore("imaps");
 
             // Retrieve the IMAP host from properties
