@@ -3,12 +3,7 @@ package com.barosanu;
 import com.barosanu.view.ViewFactory;
 import javafx.application.Application;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
-
-import java.util.Objects;
 
 public class Launcher extends Application{
 
@@ -25,6 +20,5 @@ public class Launcher extends Application{
 
         ViewFactory viewFactory = new ViewFactory(new EmailManager());
         viewFactory.showLoginWindow();
-        viewFactory.updateStyles();
     }
 }
