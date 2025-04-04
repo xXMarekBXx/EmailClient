@@ -4,25 +4,23 @@ import com.barosanu.model.EmailMessage;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.scene.web.WebEngine;
+import org.jsoup.Jsoup;
 
 import javax.mail.BodyPart;
 import javax.mail.Message;
-import javax.mail.MessagingException;
 import javax.mail.Multipart;
-import java.io.IOException;
+import javax.mail.internet.MimeBodyPart;
 
-public class MessageRendererService extends Service {
+public class MessageRendererService extends Service<Void> {
 
-    private EmailMessage emailMessage;
+    private static EmailMessage emailMessage;
     private WebEngine webEngine;
-    private StringBuffer stringBuffer;
+    private static StringBuffer stringBuffer;
 
     public MessageRendererService(WebEngine webEngine) {
         this.webEngine = webEngine;
         this.stringBuffer = new StringBuffer();
-        this.setOnSucceeded(event -> {
-            displayMessage();
-        });
+        this.setOnSucceeded(event -> displayMessage());
     }
 
     public void setEmailMessage(EmailMessage emailMessage) {
@@ -34,10 +32,10 @@ public class MessageRendererService extends Service {
     }
 
     @Override
-    protected Task createTask() {
-        return new Task() {
+    protected Task<Void> createTask() {
+        return new Task<>() {
             @Override
-            protected Object call() throws Exception {
+            protected Void call() {
                 try {
                     loadMessage();
                 } catch (Exception e) {
@@ -48,41 +46,67 @@ public class MessageRendererService extends Service {
         };
     }
 
-    private void loadMessage() throws MessagingException, IOException {
-        stringBuffer.setLength(0);
-        Message message = emailMessage.getMessage();
-        Object content = message.getContent();
+    public static String getTextFromMessage(Message message) throws Exception {
+        if (message.isMimeType("text/plain")) {
+            return message.getContent().toString().trim();
+        } else if (message.isMimeType("text/html")) {
+            return Jsoup.parse(message.getContent().toString()).html();
+        } else if (message.isMimeType("multipart/*")) {
+            return getTextFromMultipart((Multipart) message.getContent());
+        }
+        return "";
+    }
 
-        if (content instanceof String) {
-            stringBuffer.append(content.toString());
-        } else if (content instanceof Multipart) {
-            Multipart multipart = (Multipart) content;
-            for (int i = 0; i < multipart.getCount(); i++) {
-                BodyPart bodyPart = multipart.getBodyPart(i);
-                if (bodyPart.isMimeType("text/html")) {
-                    stringBuffer.append(bodyPart.getContent().toString());
-                } else if (bodyPart.isMimeType("text/plain")) {
-                    stringBuffer.append(bodyPart.getContent().toString());
+    private static String getTextFromMultipart(Multipart multipart) throws Exception {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < multipart.getCount(); i++) {
+            BodyPart bodyPart = multipart.getBodyPart(i);
+
+            if (bodyPart.isMimeType("text/plain")) {
+                result.append(bodyPart.getContent().toString().trim());
+            } else if (bodyPart.isMimeType("text/html")) {
+                result.append(Jsoup.parse(bodyPart.getContent().toString()).html());
+            } else if (bodyPart.isMimeType("multipart/*")) {
+                result.append(getTextFromMultipart((Multipart) bodyPart.getContent()));
+            } else if (BodyPart.ATTACHMENT.equalsIgnoreCase(bodyPart.getDisposition())) {
+                MimeBodyPart mbp = (MimeBodyPart) bodyPart;
+
+                // Prevent duplicate attachments
+                if (!emailMessage.containsAttachment(mbp.getFileName())) {
+                    handleAttachment(bodyPart);
                 }
             }
+        }
+        return result.toString();
+    }
+
+    private static void handleAttachment(BodyPart bodyPart) throws Exception {
+        MimeBodyPart mbp = (MimeBodyPart) bodyPart;
+        emailMessage.addAttachment(mbp);
+        System.out.println("Attachments found: " + mbp.getFileName());
+    }
+
+    private void loadMessage() throws Exception {
+        stringBuffer.setLength(0);
+        Message message = emailMessage.getMessage();
+        String contentType = message.getContentType();
+        System.out.println("Content Type: " + contentType);
+        if (isSimpleType(contentType)) {
+            System.out.println("isSimpleType");
+            stringBuffer.append(getTextFromMessage(message));
+        } else if (isMultipartType(contentType)) {
+            System.out.println("isMultipartType");
+            Multipart multipart = (Multipart) message.getContent();
+            stringBuffer.append(getTextFromMultipart(multipart));
         }
     }
 
     private boolean isSimpleType(String contentType) {
-        if (contentType.contains("TEXT/HTML") ||
-                contentType.contains("mixed") ||
-                contentType.contains("text")) {
-            return true;
-        } else {
-            return false;
-        }
+        return contentType.toLowerCase().contains("text/plain") ||
+                contentType.toLowerCase().contains("text/html");
     }
 
     private boolean isMultipartType(String contentType) {
-        if (contentType.contains("multipart")) {
-            return true;
-        } else {
-            return false;
-        }
+        return contentType.toLowerCase().contains("multipart");
     }
 }

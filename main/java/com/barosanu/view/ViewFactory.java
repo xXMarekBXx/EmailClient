@@ -63,18 +63,27 @@ public class ViewFactory {
 
     public void showOptionsWindow(){
 
-        System.out.println("showOptionsWindow function from OptionsWindowController called");
+        System.out.println("showOptionsWindow function from ViewFactory called");
 
         BaseController controller = new OptionsWindowController(emailManager, this, "/view/css/OptionsWindow.fxml");
         initializeStage(controller);
     }
 
     public void showComposeMessageWindow(){
-
-        System.out.println("showComposeMessageWindow function from OptionsWindowController called");
-
+        System.out.println("showComposeMessageWindow function from ViewFactory called");
         BaseController controller = new ComposeMessageController(emailManager, this, "/view/css/ComposeMessageWindow.fxml");
         initializeStage(controller);
+    }
+
+    public void showEmailDetailsWindow(){
+        System.out.println("showEmailDetailsWindow function from ViewFactory called");
+        try{
+            BaseController controller = new EmailDetailsController(emailManager, this, "/view/css/EmailDetailsWindow.fxml");
+            initializeStage(controller);
+        }catch(Exception e){
+            System.out.println("Failed to load EmailDetailsWindow.fxml");
+            e.printStackTrace();
+        }
     }
 
     private void initializeStage(BaseController baseController){
